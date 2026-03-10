@@ -3,6 +3,7 @@ const axios = require("axios");
 
 const { createRazorpayOrder } = require("../services/razorpay.service");
 const { createPaytmPayment } = require("../services/paytm.service");
+const { sendPaymentEvent } = require("../services/sqs.service");
 
 exports.createPayment = async (req,res)=>{
 
@@ -60,9 +61,10 @@ if(expectedSignature === razorpay_signature){
 
 // ✅ PAYMENT VALID
 
-await axios.post(`${process.env.ORDER_SERVICE_URL}/orders/payment-update`,{
-orderId,
-status:"PAID"
+await sendPaymentEvent({
+type: "PAYMENT_SUCCESS",
+orderId: orderId,
+status: "PAID"
 });
 
 return res.json({
