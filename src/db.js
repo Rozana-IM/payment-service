@@ -17,9 +17,13 @@ const connect = () => {
       console.error("❌ Payment Service DB connection failed:", err.message);
       return;
     }
+
     console.log("✅ Payment Service DB connected");
     connection.release();
   });
 };
 
-module.exports = { pool, connect };
+module.exports = {
+  pool,
+  connect
+};
