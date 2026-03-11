@@ -8,6 +8,6 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 4002
+EXPOSE 5000
 
 CMD ["node", "src/app.js"]
