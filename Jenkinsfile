@@ -11,7 +11,7 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
 
         ECS_CLUSTER = "DevCluster"
-        ECS_SERVICE = "order-service1-service-7r0drf7p"
+        ECS_SERVICE = "payment-service-service-ann34hzc"
         TASK_FAMILY = "payment-service"
     }
 
