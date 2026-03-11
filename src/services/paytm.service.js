@@ -1,10 +1,14 @@
-const axios = require("axios");
-
 exports.createPaytmPayment = async (orderId, amount) => {
 
+  const paymentUrl = `https://securegw.paytm.in/theia/paytmCallback?ORDER_ID=${orderId}`;
+
   return {
-    paymentUrl: `https://secure.paytm.in/order/${orderId}`,
-    amount
+    gateway: "paytm",
+    payment: {
+      paymentUrl: paymentUrl,
+      orderId: orderId,
+      amount: amount
+    }
   };
 
 };
