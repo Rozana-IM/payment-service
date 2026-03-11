@@ -1,5 +1,4 @@
 const crypto = require("crypto");
-const axios = require("axios");
 
 const { createRazorpayOrder } = require("../services/razorpay.service");
 const { createPaytmPayment } = require("../services/paytm.service");
@@ -9,11 +8,18 @@ exports.createPayment = async (req,res)=>{
 
 const { orderId, amount, method } = req.body;
 
+if(!orderId || !amount || !method){
+return res.status(400).json({
+error:"Missing payment details"
+});
+}
+
 try{
 
 if(method === "razorpay"){
 
-const order = await createRazorpayOrder(amount);
+// Razorpay requires paise
+const order = await createRazorpayOrder(amount * 100);
 
 return res.json({
 gateway:"razorpay",
@@ -33,17 +39,22 @@ payment
 
 }
 
-res.status(400).json({error:"Invalid payment method"});
+return res.status(400).json({
+error:"Invalid payment method"
+});
 
 }catch(err){
 
-console.error(err);
+console.error("Payment creation error:",err.message);
 
-res.status(500).json({error:"Payment creation failed"});
+res.status(500).json({
+error:"Payment creation failed"
+});
 
 }
 
 };
+
 exports.verifyPayment = async (req,res)=>{
 
 const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -59,11 +70,12 @@ const expectedSignature = crypto
 
 if(expectedSignature === razorpay_signature){
 
-// ✅ PAYMENT VALID
+// PAYMENT VALID
 
 await sendPaymentEvent({
 type: "PAYMENT_SUCCESS",
-orderId: orderId,
+orderId,
+paymentId: razorpay_payment_id,
 status: "PAID"
 });
 
