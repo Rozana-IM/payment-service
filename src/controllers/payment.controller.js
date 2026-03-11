@@ -4,9 +4,15 @@ const { createRazorpayOrder } = require("../services/razorpay.service");
 const { createPaytmPayment } = require("../services/paytm.service");
 const { sendPaymentEvent } = require("../services/sqs.service");
 
+
+/* =================================================
+   CREATE PAYMENT
+================================================= */
+
 exports.createPayment = async (req,res)=>{
 
 const { orderId, amount, method } = req.body;
+const userId = req.user?.id;
 
 if(!orderId || !amount || !method){
 return res.status(400).json({
@@ -14,12 +20,28 @@ error:"Missing payment details"
 });
 }
 
+if(!userId){
+return res.status(401).json({
+error:"Unauthorized"
+});
+}
+
 try{
+
+const paymentAmount = Number(amount);
+
+if(isNaN(paymentAmount)){
+return res.status(400).json({
+error:"Invalid payment amount"
+});
+}
+
+/* ================= RAZORPAY ================= */
 
 if(method === "razorpay"){
 
-// Razorpay requires paise
-const order = await createRazorpayOrder(amount * 100);
+// Razorpay requires amount in paise
+const order = await createRazorpayOrder(paymentAmount * 100);
 
 return res.json({
 gateway:"razorpay",
@@ -28,9 +50,11 @@ order
 
 }
 
+/* ================= PAYTM ================= */
+
 if(method === "paytm"){
 
-const payment = await createPaytmPayment(orderId, amount);
+const payment = await createPaytmPayment(orderId, paymentAmount);
 
 return res.json({
 gateway:"paytm",
@@ -45,9 +69,9 @@ error:"Invalid payment method"
 
 }catch(err){
 
-console.error("Payment creation error:",err.message);
+console.error("❌ Payment creation error:",err.message);
 
-res.status(500).json({
+return res.status(500).json({
 error:"Payment creation failed"
 });
 
@@ -55,9 +79,21 @@ error:"Payment creation failed"
 
 };
 
+
+
+/* =================================================
+   VERIFY PAYMENT
+================================================= */
+
 exports.verifyPayment = async (req,res)=>{
 
 const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+if(!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature){
+return res.status(400).json({
+error:"Missing verification details"
+});
+}
 
 try{
 
@@ -70,16 +106,18 @@ const expectedSignature = crypto
 
 if(expectedSignature === razorpay_signature){
 
-// PAYMENT VALID
+/* SEND EVENT TO SQS */
 
 await sendPaymentEvent({
-type: "PAYMENT_SUCCESS",
+type:"PAYMENT_SUCCESS",
 orderId,
 paymentId: razorpay_payment_id,
-status: "PAID"
+gateway:"razorpay",
+status:"PAID"
 });
 
 return res.json({
+success:true,
 message:"Payment verified successfully"
 });
 
@@ -91,9 +129,9 @@ error:"Payment verification failed"
 
 }catch(err){
 
-console.error("Verification error:",err.message);
+console.error("❌ Verification error:",err.message);
 
-res.status(500).json({
+return res.status(500).json({
 error:"Payment verification failed"
 });
 
