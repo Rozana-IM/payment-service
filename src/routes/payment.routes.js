@@ -8,12 +8,7 @@ const {
   verifyPayment
 } = require("../controllers/payment.controller");
 
-/* CREATE PAYMENT */
-
 router.post("/payments/create", verifyToken, createPayment);
-
-/* VERIFY PAYMENT */
-
 router.post("/payments/verify", verifyToken, verifyPayment);
 
 module.exports = router;
