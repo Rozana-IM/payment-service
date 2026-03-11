@@ -6,7 +6,7 @@ const { verifyToken } = require("../middleware/auth.middleware");
 const {
   createPayment,
   verifyPayment
-} = require("../controllers/payment.controller");
+} = require("../controllers/payment.controllers");
 
 /* CREATE PAYMENT */
 
