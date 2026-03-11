@@ -94,26 +94,31 @@ pipeline {
         }
 
         stage('Deploy New Revision') {
-            steps {
-                sh '''
-                #!/bin/bash
-                set -eux
+    steps {
+        sh '''
+        #!/bin/bash
+        set -eux
 
-                REVISION=$(cat revision.txt)
+        REVISION=$(cat revision.txt)
 
-                aws ecs update-service \
-                  --cluster $ECS_CLUSTER \
-                  --service $ECS_SERVICE \
-                  --task-definition $TASK_FAMILY:$REVISION \
-                  --region $AWS_REGION
-                '''
-            }
-        }
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE \
+          --task-definition $TASK_FAMILY:$REVISION \
+          --region $AWS_REGION
+
+        aws ecs wait services-stable \
+          --cluster $ECS_CLUSTER \
+          --services $ECS_SERVICE \
+          --region $AWS_REGION
+        '''
+    }
+}
     }
 
     post {
         always {
-            sh 'docker image prune -f'
+            sh 'docker system prune -af'
         }
     }
 }
