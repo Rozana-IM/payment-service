@@ -54,8 +54,7 @@ order
 
 if(method === "paytm"){
 
-const payment = await createPaytmPayment(orderId, paymentAmount);
-
+const order = await createRazorpayOrder(orderId, paymentAmount);
 return res.json({
 gateway:"paytm",
 payment
