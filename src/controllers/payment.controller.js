@@ -38,18 +38,16 @@ error:"Invalid payment amount"
 
 /* ================= RAZORPAY ================= */
 
-if(method === "razorpay"){
+if(method === "paytm"){
 
-// Razorpay requires amount in paise
-const order = await createRazorpayOrder(paymentAmount * 100);
+const payment = await createPaytmPayment(orderId, paymentAmount);
 
 return res.json({
-gateway:"razorpay",
-order
+gateway:"paytm",
+payment
 });
 
 }
-
 /* ================= PAYTM ================= */
 
 if(method === "paytm"){
