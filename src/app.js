@@ -1,13 +1,11 @@
 const express = require("express");
-const cors = require("cors");
+const cors = require("cors");  // Single import
 
 const paymentRoutes = require("./routes/payment.routes");
 const db = require("./db");
 
 const app = express();
 const PORT = process.env.PORT || 4002;
-
-/* ================= Middleware ================= */
 
 app.use(express.json());
 
@@ -23,22 +21,14 @@ app.use(cors({
 
 app.options("*", cors());
 
-/* ================= DB ================= */
-
 db.connect();
 
-/* ================= Health ================= */
-
-app.get("/payments/health",(req,res)=>{
+app.get("/payments/health", (req, res) => {
   res.status(200).send("Payment Service Healthy");
 });
 
-/* ================= Routes ================= */
-
 app.use(paymentRoutes);
 
-/* ================= Start ================= */
-
-app.listen(PORT,"0.0.0.0",()=>{
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Payment service running on port ${PORT}`);
 });
