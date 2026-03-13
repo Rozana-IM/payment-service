@@ -3,80 +3,45 @@ const crypto = require("crypto");
 const { createRazorpayOrder } = require("../services/razorpay.service");
 const { createPaytmPayment } = require("../services/paytm.service");
 const { sendPaymentEvent } = require("../services/sqs.service");
-
-
 /* =================================================
    CREATE PAYMENT
 ================================================= */
 
 exports.createPayment = async (req,res)=>{
+  const { orderId, amount, method } = req.body;
+  const userId = req.user?.id;
 
-const { orderId, amount, method } = req.body;
-const userId = req.user?.id;
+  if(!orderId || !amount || !method){
+    return res.status(400).json({error:"Missing payment details"});
+  }
 
-if(!orderId || !amount || !method){
-return res.status(400).json({
-error:"Missing payment details"
-});
-}
+  try {
+    const paymentAmount = Number(amount);
 
-if(!userId){
-return res.status(401).json({
-error:"Unauthorized"
-});
-}
+    // ✅ FIXED: Correct Razorpay logic
+    if(method === "razorpay") {
+      const order = await createRazorpayOrder(orderId, paymentAmount);
+      return res.json({
+        gateway: "razorpay",
+        order: order  // Frontend expects 'order'
+      });
+    }
 
-try{
+    // ✅ Paytm fallback
+    if(method === "paytm") {
+      const payment = await createPaytmPayment(orderId, paymentAmount);
+      return res.json({
+        gateway: "paytm",
+        payment
+      });
+    }
 
-const paymentAmount = Number(amount);
-
-if(isNaN(paymentAmount)){
-return res.status(400).json({
-error:"Invalid payment amount"
-});
-}
-
-/* ================= RAZORPAY ================= */
-
-if(method === "paytm"){
-
-const payment = await createPaytmPayment(orderId, paymentAmount);
-
-return res.json({
-gateway:"paytm",
-payment
-});
-
-}
-/* ================= PAYTM ================= */
-
-if(method === "paytm"){
-
-const order = await createRazorpayOrder(orderId, paymentAmount);
-return res.json({
-gateway:"paytm",
-payment
-});
-
-}
-
-return res.status(400).json({
-error:"Invalid payment method"
-});
-
-}catch(err){
-
-console.error("❌ Payment creation error:",err.message);
-
-return res.status(500).json({
-error:"Payment creation failed"
-});
-
-}
-
+    return res.status(400).json({error:"Invalid payment method"});
+  } catch(err) {
+    console.error("❌ Payment creation error:",err.message);
+    return res.status(500).json({error:"Payment creation failed"});
+  }
 };
-
-
 
 /* =================================================
    VERIFY PAYMENT
