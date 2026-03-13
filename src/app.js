@@ -6,10 +6,19 @@ const jwt = require("jsonwebtoken");
 const app = express();
 app.use(express.json());
 
+const cors = require("cors");
+
 app.use(cors({
-  origin: true,
+  origin: [
+    "https://rozana-projects.online",
+    "https://d1u1ckd80xkseo.cloudfront.net"
+  ],
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
   credentials: true
 }));
+
+app.options("*", cors());
 
 // 🔥 DIRECT ROUTES
 app.post("/payments/create", createPayment);
