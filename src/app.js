@@ -22,7 +22,13 @@ app.options("*", cors());
 app.post("/payments/create", createPayment);
 app.post("/payments/verify", verifyPayment);
 
+// Health check for ECS / ALB
 app.get("/health", (req, res) => {
+  res.json({ status: "healthy" });
+});
+
+// IMPORTANT: add this for ALB
+app.get("/payments/health", (req, res) => {
   res.json({ status: "healthy" });
 });
 
