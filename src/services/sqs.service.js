@@ -7,12 +7,9 @@ const sqs = new SQSClient({
 exports.sendPaymentEvent = async (event) => {
 
   const params = {
-    QueueUrl: process.env.SQS_QUEUE_URL,
-    MessageBody: JSON.stringify(event),
-
-    MessageGroupId: "payments",
-    MessageDeduplicationId: event.orderId + "-" + Date.now()
-  };
+QueueUrl: process.env.SQS_QUEUE_URL,
+MessageBody: JSON.stringify(event)
+};
 
   const command = new SendMessageCommand(params);
 
