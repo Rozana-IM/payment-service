@@ -9,7 +9,6 @@ const { sendPaymentEvent } = require("../services/sqs.service");
 
 exports.createPayment = async (req,res)=>{
   const { orderId, amount, method } = req.body;
-  const userId = req.user?.id;
 
   if(!orderId || !amount || !method){
     return res.status(400).json({error:"Missing payment details"});
