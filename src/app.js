@@ -34,7 +34,7 @@ app.get("/health", (req, res) => {
 
 /* Optional */
 app.get("/payments/health", (req, res) => {
-  res.status(200).send("OK");
+res.status(200).json({ status: "ok" });
 });
 
 app.listen(4002, "0.0.0.0", () => {
