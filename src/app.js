@@ -24,8 +24,9 @@ app.use(cors({
 app.options("*", cors());
 
 // ROUTES
-app.post("/payments/create", createPayment);
-app.post("/payments/verify", verifyPayment);
+const paymentRoutes = require("./routes/payment.routes");
+
+app.use("/payments", paymentRoutes);
 
 /* ✅ Health (VERY IMPORTANT) */
 app.get("/health", (req, res) => {
