@@ -3,7 +3,6 @@ const Razorpay = require("razorpay");
 exports.createRazorpayOrder = async (orderId, amount) => {
 
   if (!process.env.RAZORPAY_KEY || !process.env.RAZORPAY_SECRET) {
-    console.error("❌ Razorpay ENV missing");
     throw new Error("Razorpay env missing");
   }
 
@@ -12,7 +11,7 @@ exports.createRazorpayOrder = async (orderId, amount) => {
     key_secret: process.env.RAZORPAY_SECRET
   });
 
-  console.log("✅ Razorpay initialized");
+  console.log("✅ Creating Razorpay Order:", orderId, amount);
 
   return razorpay.orders.create({
     amount: amount * 100,
