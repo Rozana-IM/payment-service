@@ -36,6 +36,15 @@ pipeline {
             }
         }
 
+        stage('Clean Docker') {
+  steps {
+    sh '''
+      docker system prune -af || true
+      docker volume prune -f || true
+    '''
+  }
+}
+
         stage('Build & Push Image') {
             steps {
                 sh '''
