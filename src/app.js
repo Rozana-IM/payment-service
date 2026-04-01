@@ -1,6 +1,7 @@
+require("dotenv").config(); // 🔥 MUST BE FIRST LINE
+
 const express = require("express");
 const cors = require("cors");
-const { createPayment, verifyPayment } = require("./controllers/payment.controller");
 const { connect } = require("./db");
 
 const app = express();
@@ -25,17 +26,15 @@ app.options("*", cors());
 
 // ROUTES
 const paymentRoutes = require("./routes/payment.routes");
-
 app.use("/payments", paymentRoutes);
 
-/* ✅ Health (VERY IMPORTANT) */
+/* ✅ Health */
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-/* Optional */
 app.get("/payments/health", (req, res) => {
-res.status(200).json({ status: "ok" });
+  res.status(200).json({ status: "ok" });
 });
 
 app.listen(4002, "0.0.0.0", () => {
