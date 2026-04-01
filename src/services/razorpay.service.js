@@ -2,20 +2,21 @@ const Razorpay = require("razorpay");
 
 exports.createRazorpayOrder = async (orderId, amount) => {
 
-  // ✅ CREATE INSTANCE HERE (NOT GLOBAL)
+  if (!process.env.RAZORPAY_KEY || !process.env.RAZORPAY_SECRET) {
+    console.error("❌ Razorpay ENV missing");
+    throw new Error("Razorpay env missing");
+  }
+
   const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY,
     key_secret: process.env.RAZORPAY_SECRET
   });
 
-  console.log("👉 KEY:", process.env.RAZORPAY_KEY);
+  console.log("✅ Razorpay initialized");
 
-  const options = {
+  return razorpay.orders.create({
     amount: amount * 100,
     currency: "INR",
-    receipt: `order_${orderId}`,
-    notes: { orderId }
-  };
-
-  return razorpay.orders.create(options);
+    receipt: `order_${orderId}`
+  });
 };
