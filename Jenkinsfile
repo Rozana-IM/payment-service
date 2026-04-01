@@ -47,21 +47,22 @@ pipeline {
 }
 
         stage('Build & Push Image') {
-            steps {
-                sh '''
-                #!/bin/bash
-                set -eux
+    steps {
+        sh '''
+        #!/bin/bash
+        set -eux
 
-                docker build -t $ECR_REPO:$IMAGE_TAG .
+        # 🔥 BUILD ONLY LATEST
+        docker build -t $ECR_REPO:latest .
 
-                docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
-                docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
+        # 🔥 TAG FOR ECR
+        docker tag $ECR_REPO:latest $ECR_URI:latest
 
-                docker push $ECR_URI:$IMAGE_TAG
-                docker push $ECR_URI:latest
-                '''
-            }
-        }
+        # 🔥 PUSH ONLY ONE IMAGE
+        docker push $ECR_URI:latest
+        '''
+    }
+}
 
         stage('Create NEW Task Revision') {
             steps {
