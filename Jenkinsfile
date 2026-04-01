@@ -46,24 +46,32 @@ pipeline {
   }
 }
 
-        stage('Build & Push Image') {
+       stage('Build & Push Image') {
     steps {
         sh '''
         #!/bin/bash
         set -eux
 
-        # 🔥 BUILD ONLY LATEST
-        docker build -t $ECR_REPO:latest .
+        # Build with build number
+        docker build -t $ECR_REPO:$IMAGE_TAG .
 
-        # 🔥 TAG FOR ECR
-        docker tag $ECR_REPO:latest $ECR_URI:latest
+        # Tag for ECR
+        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
 
-        # 🔥 PUSH ONLY ONE IMAGE
+        # Push ONLY build tag
+        docker push $ECR_URI:$IMAGE_TAG
+
+        # 🔥 OPTIONAL: also tag latest (for easy rollback)
+        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
         docker push $ECR_URI:latest
+
+        # 🔥 DELETE LOCAL IMAGES IMMEDIATELY
+        docker rmi $ECR_REPO:$IMAGE_TAG || true
+        docker rmi $ECR_URI:$IMAGE_TAG || true
+        docker rmi $ECR_URI:latest || true
         '''
     }
 }
-
         stage('Create NEW Task Revision') {
             steps {
                 sh '''
