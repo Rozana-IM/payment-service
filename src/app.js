@@ -4,7 +4,7 @@ const { connect } = require("./db");
 
 const app = express();
 
-/* ✅ Non-blocking DB */
+/* DB */
 connect().catch(err => console.error("DB Error:", err));
 
 app.use(express.json());
@@ -22,16 +22,13 @@ app.use(cors({
 
 app.options("*", cors());
 
-// ROUTES
+// ✅ IMPORTANT FIX
 const paymentRoutes = require("./routes/payment.routes");
-app.use("/", paymentRoutes);
-/* ✅ Health */
+app.use("/payments", paymentRoutes);
+
+/* Health */
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
-});
-
-app.get("/payments/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
 });
 
 app.listen(4002, "0.0.0.0", () => {
