@@ -1,21 +1,11 @@
 const crypto = require("crypto");
-
 const { createRazorpayOrder } = require("../services/razorpay.service");
-const { createPaytmPayment } = require("../services/paytm.service");
-const { sendPaymentEvent } = require("../services/sqs.service");
 
-// ✅ SAFE IMPORT (won’t crash)
-let sendOrderEmail;
-try {
-  sendOrderEmail = require("../services/email.service").sendOrderEmail;
-} catch (err) {
-  console.log("⚠️ Email service not loaded");
-}
-
-// ================= CREATE PAYMENT =================
 exports.createPayment = async (req, res) => {
 
   const { orderId, amount, method } = req.body;
+
+  console.log("🔥 BODY:", req.body);
 
   if (!orderId || !amount || !method) {
     return res.status(400).json({ error: "Missing payment details" });
@@ -24,9 +14,13 @@ exports.createPayment = async (req, res) => {
   try {
 
     const paymentAmount = Number(amount);
+    const paymentMethod = method.toLowerCase();
 
-    // 🔥 RAZORPAY
-    if (method === "razorpay") {
+    console.log("🔥 METHOD:", paymentMethod);
+
+    // ✅ RAZORPAY
+    if (paymentMethod === "razorpay") {
+
       const order = await createRazorpayOrder(orderId, paymentAmount);
 
       return res.json({
@@ -35,46 +29,31 @@ exports.createPayment = async (req, res) => {
       });
     }
 
-    // 🔥 COD
-    if (method === "cod") {
-
-      await sendPaymentEvent({
-        type: "PAYMENT_SUCCESS",
-        orderId,
-        gateway: "cod",
-        status: "PENDING"
-      });
-
-      // ✅ EMAIL SAFE CALL
-      if (req.user?.email && sendOrderEmail) {
-        await sendOrderEmail(req.user.email, orderId);
-      }
-
+    // ✅ COD
+    if (paymentMethod === "cod") {
       return res.json({
         gateway: "cod",
-        message: "Order placed with Cash on Delivery"
+        message: "Order placed with COD"
       });
     }
 
-    // 🔥 PAYTM
-    if (method === "paytm") {
-      const payment = await createPaytmPayment(orderId, paymentAmount);
-
+    // ✅ PAYTM (optional)
+    if (paymentMethod === "paytm") {
       return res.json({
         gateway: "paytm",
-        payment
+        paymentUrl: `https://securegw.paytm.in/...`
       });
     }
 
     return res.status(400).json({ error: "Invalid payment method" });
 
   } catch (err) {
-    console.error("❌ Payment creation error:", err.message);
-    return res.status(500).json({ error: "Payment creation failed" });
+    console.error("❌ Payment error:", err.message);
+    return res.status(500).json({ error: "Payment failed" });
   }
 };
 
-// ================= VERIFY PAYMENT =================
+
 exports.verifyPayment = async (req, res) => {
 
   const {
@@ -99,29 +78,18 @@ exports.verifyPayment = async (req, res) => {
 
     if (expectedSignature === razorpay_signature) {
 
-      await sendPaymentEvent({
-        type: "PAYMENT_SUCCESS",
-        orderId,
-        paymentId: razorpay_payment_id,
-        gateway: "razorpay",
-        status: "PAID"
-      });
-
-      // ✅ EMAIL SAFE CALL
-      if (req.user?.email && sendOrderEmail) {
-        await sendOrderEmail(req.user.email, orderId);
-      }
+      console.log("✅ PAYMENT VERIFIED:", orderId);
 
       return res.json({
         success: true,
-        message: "Payment verified successfully"
+        message: "Payment verified"
       });
     }
 
-    return res.status(400).json({ error: "Payment verification failed" });
+    return res.status(400).json({ error: "Invalid signature" });
 
   } catch (err) {
-    console.error("❌ Verification error:", err.message);
-    return res.status(500).json({ error: "Payment verification failed" });
+    console.error("❌ Verify error:", err.message);
+    return res.status(500).json({ error: "Verification failed" });
   }
 };
