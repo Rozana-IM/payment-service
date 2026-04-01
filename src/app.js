@@ -10,6 +10,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "https://rozana-projects.online",
+    "https://www.rozana-projects.online",
     "https://d1u1ckd80xkseo.cloudfront.net"
   ],
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
@@ -19,16 +20,16 @@ app.use(cors({
 
 app.options("*", cors());
 
-// ROUTES
+// ✅ ROUTES
 app.post("/payments/create", verifyToken, createPayment);
 app.post("/payments/verify", verifyToken, verifyPayment);
 
-// HEALTH
+// ✅ HEALTH
 app.get("/health", (req, res) => {
   res.json({ status: "healthy" });
 });
 
-// SERVER
+// ✅ SERVER
 app.listen(4002, "0.0.0.0", () => {
-  console.log("✅ Payment service LIVE");
+  console.log("✅ Payment service LIVE on 4002");
 });
