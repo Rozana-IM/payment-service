@@ -24,8 +24,7 @@ app.options("*", cors());
 
 // ROUTES
 const paymentRoutes = require("./routes/payment.routes");
-app.use("/payments", paymentRoutes);
-
+app.use("/", paymentRoutes);
 /* ✅ Health */
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
