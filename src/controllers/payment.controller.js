@@ -3,11 +3,16 @@ const crypto = require("crypto");
 const { createRazorpayOrder } = require("../services/razorpay.service");
 const { createPaytmPayment } = require("../services/paytm.service");
 const { sendPaymentEvent } = require("../services/sqs.service");
-const { sendOrderEmail } = require("../services/email.service"); // ✅ ADD THIS
 
-// =======================================
-// CREATE PAYMENT
-// =======================================
+// ✅ SAFE IMPORT (won’t crash)
+let sendOrderEmail;
+try {
+  sendOrderEmail = require("../services/email.service").sendOrderEmail;
+} catch (err) {
+  console.log("⚠️ Email service not loaded");
+}
+
+// ================= CREATE PAYMENT =================
 exports.createPayment = async (req, res) => {
 
   const { orderId, amount, method } = req.body;
@@ -40,8 +45,8 @@ exports.createPayment = async (req, res) => {
         status: "PENDING"
       });
 
-      // ✅ SEND EMAIL
-      if (req.user?.email) {
+      // ✅ EMAIL SAFE CALL
+      if (req.user?.email && sendOrderEmail) {
         await sendOrderEmail(req.user.email, orderId);
       }
 
@@ -53,7 +58,6 @@ exports.createPayment = async (req, res) => {
 
     // 🔥 PAYTM
     if (method === "paytm") {
-
       const payment = await createPaytmPayment(orderId, paymentAmount);
 
       return res.json({
@@ -70,10 +74,7 @@ exports.createPayment = async (req, res) => {
   }
 };
 
-
-// =======================================
-// VERIFY PAYMENT (RAZORPAY)
-// =======================================
+// ================= VERIFY PAYMENT =================
 exports.verifyPayment = async (req, res) => {
 
   const {
@@ -106,8 +107,8 @@ exports.verifyPayment = async (req, res) => {
         status: "PAID"
       });
 
-      // ✅ SEND EMAIL HERE (THIS IS WHERE YOU ADD IT)
-      if (req.user?.email) {
+      // ✅ EMAIL SAFE CALL
+      if (req.user?.email && sendOrderEmail) {
         await sendOrderEmail(req.user.email, orderId);
       }
 
