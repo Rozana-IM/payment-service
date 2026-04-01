@@ -4,7 +4,7 @@ const { createPayment, verifyPayment } = require("../controllers/payment.control
 
 const { verifyToken } = require("../middleware/auth.middleware");
 
-router.post("/create", verifyToken, createPayment);
+router.post("/create", createPayment);
 router.post("/verify", verifyToken, verifyPayment);
 
 module.exports = router;
