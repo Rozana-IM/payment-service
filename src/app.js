@@ -1,19 +1,15 @@
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { connect } = require("./db");
+const { createPayment, verifyPayment } = require("./controllers/payment.controller");
+const { verifyToken } = require("./middleware/auth.middleware");
 
 const app = express();
-
-/* DB */
-connect().catch(err => console.error("DB Error:", err));
 
 app.use(express.json());
 
 app.use(cors({
   origin: [
     "https://rozana-projects.online",
-    "https://www.rozana-projects.online",
     "https://d1u1ckd80xkseo.cloudfront.net"
   ],
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
@@ -23,15 +19,16 @@ app.use(cors({
 
 app.options("*", cors());
 
-// ✅ IMPORTANT FIX
-const paymentRoutes = require("./routes/payment.routes");
-app.use("/payments", paymentRoutes);
+// ROUTES
+app.post("/payments/create", verifyToken, createPayment);
+app.post("/payments/verify", verifyToken, verifyPayment);
 
-/* Health */
+// HEALTH
 app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+  res.json({ status: "healthy" });
 });
 
+// SERVER
 app.listen(4002, "0.0.0.0", () => {
   console.log("✅ Payment service LIVE");
 });
