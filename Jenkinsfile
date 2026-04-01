@@ -36,9 +36,10 @@ pipeline {
             }
         }
 
-        stage('Clean Docker') {
+        stage('Cleanup Docker') {
   steps {
     sh '''
+      echo "Cleaning Docker space..."
       docker system prune -af || true
       docker volume prune -f || true
     '''
