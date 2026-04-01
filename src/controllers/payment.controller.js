@@ -4,8 +4,16 @@ const { createRazorpayOrder } = require("../services/razorpay.service");
 const { createPaytmPayment } = require("../services/paytm.service");
 const { sendPaymentEvent } = require("../services/sqs.service");
 
-exports.createPayment = async (req,res)=>{
-  const { orderId, amount, method } = req.body;
+exports.createPaytmPayment = async (orderId, amount) => {
+
+  const paymentUrl = `https://securegw.paytm.in/theia/paytmCallback?ORDER_ID=${orderId}`;
+
+  return {
+    paymentUrl,
+    orderId,
+    amount
+  };
+};
 
   if(!orderId || !amount || !method){
     return res.status(400).json({error:"Missing payment details"});
@@ -22,6 +30,20 @@ exports.createPayment = async (req,res)=>{
         order
       });
     }
+
+    if(method === "cod"){
+  await sendPaymentEvent({
+    type:"PAYMENT_SUCCESS",
+    orderId,
+    gateway:"cod",
+    status:"PENDING"
+  });
+
+  return res.json({
+    gateway:"cod",
+    message:"Order placed with Cash on Delivery"
+  });
+}
 
     if(method === "paytm"){
       const payment = await createPaytmPayment(orderId, paymentAmount);
