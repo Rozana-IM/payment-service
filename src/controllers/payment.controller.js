@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const axios = require("axios");
 const { createRazorpayOrder } = require("../services/razorpay.service");
 
 exports.createPayment = async (req, res) => {
@@ -37,7 +38,7 @@ exports.createPayment = async (req, res) => {
       });
     }
 
-    // ✅ PAYTM (optional)
+    // ✅ PAYTM
     if (paymentMethod === "paytm") {
       return res.json({
         gateway: "paytm",
@@ -52,6 +53,7 @@ exports.createPayment = async (req, res) => {
     return res.status(500).json({ error: "Payment failed" });
   }
 };
+
 
 
 exports.verifyPayment = async (req, res) => {
@@ -80,9 +82,19 @@ exports.verifyPayment = async (req, res) => {
 
       console.log("✅ PAYMENT VERIFIED:", orderId);
 
+      // 🔥🔥🔥 THIS IS THE MOST IMPORTANT PART
+      await axios.put(
+        "https://api.rozana-projects.online/orders/update-status",
+        {
+          orderId,
+          status: "PAID",
+          paymentId: razorpay_payment_id
+        }
+      );
+
       return res.json({
         success: true,
-        message: "Payment verified"
+        message: "Payment verified & order updated"
       });
     }
 
