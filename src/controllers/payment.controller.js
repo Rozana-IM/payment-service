@@ -54,8 +54,6 @@ exports.createPayment = async (req, res) => {
   }
 };
 
-
-
 exports.verifyPayment = async (req, res) => {
 
   const {
@@ -82,7 +80,16 @@ exports.verifyPayment = async (req, res) => {
 
       console.log("✅ PAYMENT VERIFIED:", orderId);
 
-      // 🔥🔥🔥 THIS IS THE MOST IMPORTANT PART
+      // 🔥 ADD THIS LINE HERE
+      console.log("🚀 Updating order status in order-service...");
+
+      // 🔥 ALSO ADD FULL DEBUG (VERY IMPORTANT)
+      console.log("📦 Payload:", {
+        orderId,
+        status: "PAID",
+        paymentId: razorpay_payment_id
+      });
+
       await axios.put(
         "https://api.rozana-projects.online/orders/update-status",
         {
@@ -91,6 +98,8 @@ exports.verifyPayment = async (req, res) => {
           paymentId: razorpay_payment_id
         }
       );
+
+      console.log("✅ Order status updated successfully");
 
       return res.json({
         success: true,
@@ -101,7 +110,10 @@ exports.verifyPayment = async (req, res) => {
     return res.status(400).json({ error: "Invalid signature" });
 
   } catch (err) {
-    console.error("❌ Verify error:", err.message);
+
+    // 🔥 IMPROVE ERROR LOG (VERY IMPORTANT)
+    console.error("❌ Verify error FULL:", err.response?.data || err.message);
+
     return res.status(500).json({ error: "Verification failed" });
   }
 };
