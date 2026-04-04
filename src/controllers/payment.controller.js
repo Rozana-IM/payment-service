@@ -90,14 +90,17 @@ exports.verifyPayment = async (req, res) => {
         paymentId: razorpay_payment_id
       });
 
-      await axios.put(
-        "https://api.rozana-projects.online/orders/update-status",
-        {
-          orderId,
-          status: "PAID",
-          paymentId: razorpay_payment_id
-        }
-      );
+    await axios.put(
+  "http://order-service:5000/orders/update-status",
+  {
+    orderId,
+    status: "PAID",
+    paymentId: razorpay_payment_id
+  },
+  {
+    timeout: 5000
+  }
+);
 
       console.log("✅ Order status updated successfully");
 
