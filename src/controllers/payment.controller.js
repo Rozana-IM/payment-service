@@ -95,15 +95,16 @@ exports.verifyPayment = async (req, res) => {
       console.log("📦 Sending to order-service:", payload);
 
       const response = await axios.put(
-        "http://order-service:5000/orders/update-status",
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json"
-          },
-          timeout: 5000
-        }
-      );
+  "https://api.rozana-projects.online/orders/update-status",
+  payload,
+  {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.SERVICE_TOKEN}`
+    },
+    timeout: 5000
+  }
+);
 
       console.log("✅ Order-service response:", response.data);
 
