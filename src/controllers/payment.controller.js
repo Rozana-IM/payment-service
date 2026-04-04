@@ -94,20 +94,61 @@ exports.verifyPayment = async (req, res) => {
 
       console.log("📦 Sending to order-service:", payload);
 
-      const response = await axios.put(
-  "https://api.rozana-projects.online/orders/update-status",
-  payload,
-  {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.SERVICE_TOKEN}`
-    },
-    timeout: 5000
+     let response;
+
+try {
+
+  response = await axios.put(
+    `${process.env.ORDER_SERVICE_URL}/orders/update-status`,
+    payload,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.SERVICE_TOKEN}`
+      },
+      timeout: 15000
+    }
+  );
+
+} catch (err) {
+
+  console.log("⚠️ First attempt failed:", err.message);
+  console.log("🔁 Retrying...");
+
+  try {
+
+    response = await axios.put(
+      `${process.env.ORDER_SERVICE_URL}/orders/update-status`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.SERVICE_TOKEN}`
+        },
+        timeout: 15000
+      }
+    );
+
+  } catch (retryErr) {
+
+    console.error("❌ Retry failed:", retryErr.message);
+
+    return res.status(500).json({
+      error: "Order update failed after retry",
+      details: retryErr.message
+    });
   }
-);
+}
 
-      console.log("✅ Order-service response:", response.data);
+if (!response || !response.data || response.status !== 200) {
+  return res.status(500).json({
+    error: "Order service failed",
+    details: response?.data
+  });
+}
 
+console.log("✅ Order-service response:", response.data);
+      
       return res.json({
         success: true,
         message: "Payment verified & order updated"
