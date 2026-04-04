@@ -8,4 +8,8 @@ const { verifyToken } = require("../middleware/auth.middleware");
 router.post("/create", verifyToken, createPayment);
 router.post("/verify", verifyToken, verifyPayment);
 
+router.get("/health", (req, res) => {
+  res.json({ status: "Payment service running" });
+});
+
 module.exports = router;
