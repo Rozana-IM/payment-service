@@ -63,7 +63,10 @@ exports.verifyPayment = async (req, res) => {
     razorpay_signature
   } = req.body;
 
+  console.log("🔥 VERIFY BODY:", req.body);
+
   if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    console.log("❌ Missing fields");
     return res.status(400).json({ error: "Missing verification details" });
   }
 
@@ -76,33 +79,33 @@ exports.verifyPayment = async (req, res) => {
       .update(body)
       .digest("hex");
 
+    console.log("🔐 Expected:", expectedSignature);
+    console.log("🔐 Received:", razorpay_signature);
+
     if (expectedSignature === razorpay_signature) {
 
       console.log("✅ PAYMENT VERIFIED:", orderId);
 
-      // 🔥 ADD THIS LINE HERE
-      console.log("🚀 Updating order status in order-service...");
-
-      // 🔥 ALSO ADD FULL DEBUG (VERY IMPORTANT)
-      console.log("📦 Payload:", {
+      const payload = {
         orderId,
         status: "PAID",
         paymentId: razorpay_payment_id
-      });
+      };
 
-    await axios.put(
-  "http://order-service:5000/orders/update-status",
-  {
-    orderId,
-    status: "PAID",
-    paymentId: razorpay_payment_id
-  },
-  {
-    timeout: 5000
-  }
-);
+      console.log("📦 Sending to order-service:", payload);
 
-      console.log("✅ Order status updated successfully");
+      const response = await axios.put(
+        "http://order-service:5000/orders/update-status",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json"
+          },
+          timeout: 5000
+        }
+      );
+
+      console.log("✅ Order-service response:", response.data);
 
       return res.json({
         success: true,
@@ -110,13 +113,19 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
+    console.log("❌ Signature mismatch");
     return res.status(400).json({ error: "Invalid signature" });
 
   } catch (err) {
 
-    // 🔥 IMPROVE ERROR LOG (VERY IMPORTANT)
-    console.error("❌ Verify error FULL:", err.response?.data || err.message);
+    console.error("❌ AXIOS ERROR FULL:");
+    console.error("Message:", err.message);
+    console.error("Response:", err.response?.data);
+    console.error("Status:", err.response?.status);
 
-    return res.status(500).json({ error: "Verification failed" });
+    return res.status(500).json({
+      error: "Verification failed",
+      details: err.message
+    });
   }
 };
