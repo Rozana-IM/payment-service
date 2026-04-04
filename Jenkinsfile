@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -26,62 +25,40 @@ pipeline {
         stage('Login ECR') {
             steps {
                 sh '''
-                #!/bin/bash
                 set -eux
-
                 aws ecr get-login-password --region $AWS_REGION | \
                 docker login --username AWS \
-                --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+                --password-stdin $ECR_URI
                 '''
             }
         }
 
-        stage('Cleanup Docker') {
-  steps {
-    sh '''
-      echo "Cleaning Docker space..."
-      docker system prune -af || true
-      docker volume prune -f || true
-    '''
-  }
-}
+        stage('Build & Push Image') {
+            steps {
+                sh '''
+                set -eux
 
-       stage('Build & Push Image') {
-    steps {
-        sh '''
-        #!/bin/bash
-        set -eux
+                echo "🚀 Building image..."
+                docker build -t $ECR_URI:$IMAGE_TAG .
 
-        # Build with build number
-        docker build -t $ECR_REPO:$IMAGE_TAG .
+                echo "🏷 Tagging latest..."
+                docker tag $ECR_URI:$IMAGE_TAG $ECR_URI:latest
 
-        # Tag for ECR
-        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
+                echo "📤 Pushing images..."
+                docker push $ECR_URI:$IMAGE_TAG
+                docker push $ECR_URI:latest
+                '''
+            }
+        }
 
-        # Push ONLY build tag
-        docker push $ECR_URI:$IMAGE_TAG
-
-        # 🔥 OPTIONAL: also tag latest (for easy rollback)
-        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
-        docker push $ECR_URI:latest
-
-        # 🔥 DELETE LOCAL IMAGES IMMEDIATELY
-        docker rmi $ECR_REPO:$IMAGE_TAG || true
-        docker rmi $ECR_URI:$IMAGE_TAG || true
-        docker rmi $ECR_URI:latest || true
-        '''
-    }
-}
         stage('Create NEW Task Revision') {
             steps {
                 sh '''
-                #!/bin/bash
                 set -eux
 
                 aws ecs describe-task-definition \
                   --task-definition $TASK_FAMILY \
-                  --region $AWS_REGION \
-                  > task-def.json
+                  --region $AWS_REGION > task-def.json
 
                 jq --arg IMAGE "$ECR_URI:$IMAGE_TAG" '
                   .taskDefinition
@@ -113,31 +90,30 @@ pipeline {
         }
 
         stage('Deploy New Revision') {
-    steps {
-        sh '''
-        #!/bin/bash
-        set -eux
+            steps {
+                sh '''
+                set -eux
 
-        REVISION=$(cat revision.txt)
+                REVISION=$(cat revision.txt)
 
-        aws ecs update-service \
-          --cluster $ECS_CLUSTER \
-          --service $ECS_SERVICE \
-          --task-definition $TASK_FAMILY:$REVISION \
-          --region $AWS_REGION
+                aws ecs update-service \
+                  --cluster $ECS_CLUSTER \
+                  --service $ECS_SERVICE \
+                  --task-definition $TASK_FAMILY:$REVISION \
+                  --region $AWS_REGION
 
-        aws ecs wait services-stable \
-          --cluster $ECS_CLUSTER \
-          --services $ECS_SERVICE \
-          --region $AWS_REGION
-        '''
-    }
-}
+                aws ecs wait services-stable \
+                  --cluster $ECS_CLUSTER \
+                  --services $ECS_SERVICE \
+                  --region $AWS_REGION
+                '''
+            }
+        }
     }
 
     post {
         always {
-            sh 'docker system prune -af'
+            sh 'docker image prune -f'
         }
     }
 }
