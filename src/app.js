@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
-const { createPayment, verifyPayment } = require("./controllers/payment.controller");
-const { verifyToken } = require("./middleware/auth.middleware");
+
+const paymentRoutes = require("./routes/payment.routes");
 
 const app = express();
 
@@ -13,26 +13,20 @@ app.use(cors({
     "https://www.rozana-projects.online",
     "https://d1u1ckd80xkseo.cloudfront.net"
   ],
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
 app.options("*", cors());
 
-// ✅ ROUTES
-app.post("/payments/create", verifyToken, createPayment);
-app.post("/payments/verify", verifyToken, verifyPayment);
+/* ================= ROUTES ================= */
 
-// ✅ HEALTH
-app.get("/payments/health", (req, res) => {
-  res.json({
-    status: "UP",
-    service: "payment-service"
-  });
-});
+// ✅ VERY IMPORTANT (THIS FIXES YOUR ISSUE)
+app.use("/payments", paymentRoutes);
 
-// ✅ SERVER
+/* ================= SERVER ================= */
+
 app.listen(4002, "0.0.0.0", () => {
   console.log("✅ Payment service LIVE on 4002");
 });
