@@ -25,8 +25,11 @@ app.post("/payments/create", verifyToken, createPayment);
 app.post("/payments/verify", verifyToken, verifyPayment);
 
 // ✅ HEALTH
-app.get("/health", (req, res) => {
-  res.json({ status: "healthy" });
+app.get("/payments/health", (req, res) => {
+  res.json({
+    status: "UP",
+    service: "payment-service"
+  });
 });
 
 // ✅ SERVER
