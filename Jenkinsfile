@@ -34,22 +34,25 @@ pipeline {
         }
 
         stage('Build & Push Image') {
-            steps {
-                sh '''
-                set -eux
+    steps {
+        sh '''
+        set -eux
 
-                echo "🚀 Building image..."
-                docker build -t $ECR_URI:$IMAGE_TAG .
+        echo "🧹 Cleaning Docker cache..."
+        docker system prune -af || true
 
-                echo "🏷 Tagging latest..."
-                docker tag $ECR_URI:$IMAGE_TAG $ECR_URI:latest
+        echo "🚀 Building image..."
+        docker build --no-cache -t $ECR_URI:$IMAGE_TAG .
 
-                echo "📤 Pushing images..."
-                docker push $ECR_URI:$IMAGE_TAG
-                docker push $ECR_URI:latest
-                '''
-            }
-        }
+        echo "🏷 Tagging latest..."
+        docker tag $ECR_URI:$IMAGE_TAG $ECR_URI:latest
+
+        echo "📤 Pushing images..."
+        docker push $ECR_URI:$IMAGE_TAG
+        docker push $ECR_URI:latest
+        '''
+    }
+}
 
         stage('Create NEW Task Revision') {
             steps {
